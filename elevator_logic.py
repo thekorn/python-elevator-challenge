@@ -64,6 +64,7 @@ class ElevatorLogic(object):
 
         self.is_on_way = False
         self.old_direction = None
+        self.current_requested_dir = None
         self.priority = None
         self.reset_debug_path(1) # per default we start at floor one, re-call this method in other test-scenarios
 
@@ -92,6 +93,7 @@ class ElevatorLogic(object):
         floor: the floor that was requested
         """
         logging.debug("++++{} {}".format(self.callbacks.motor_direction, self.is_on_way))
+        logging.debug("try to select floor={}, dests={}, cur_motor_dir={}".format(floor, self.destinations, self.current_requested_dir))
         relative_direction = get_relative_direction(self.callbacks.current_floor, floor)
         if self.callbacks.motor_direction is not None or self.is_on_way:
             if relative_direction != self.callbacks.motor_direction:
@@ -99,9 +101,19 @@ class ElevatorLogic(object):
                 logging.debug(">>>>>>> IGNOREEEEEEEEE")
                 return
         if (floor, None) not in self.destinations:
+            if floor in [dest[0] for dest in self.destinations]:
+                logging.debug(">>>>>>> IGNOREEEEEEEEE, already going there")
+                return
             is_all_selected_dests = not any(filter(None, [dest[1] for dest in self.destinations]))
             same_relative_dirs = any(map(lambda dest: get_relative_direction(self.callbacks.current_floor, dest[0]) == relative_direction, self.destinations))
+            
+            if self.current_requested_dir is not None and relative_direction != self.current_requested_dir:
+                # TODO: might replace the next one
+                logging.debug(">>>>>>>>>> IIIIIIIIGNORE - wrong direction")
+                return
+
             if is_all_selected_dests and not same_relative_dirs and self.destinations:
+                # TODO: do we need it??????
                 logging.debug(">>>>>>> IGNOREEEEEEEEEEEE - nonesense")
                 return
             logging.debug("############### ALARM {} {} - {} {}".format(is_all_selected_dests, self.destinations, is_all_selected_dests, same_relative_dirs))
@@ -122,14 +134,18 @@ class ElevatorLogic(object):
         if (self.callbacks.current_floor, self.callbacks.motor_direction) in self.destinations:
             logging.error(">>>>>>>>>>>>>>>>>> ALARM")
             # TODO: de-duplicate
-            self.destinations.pop(self.destinations.index((self.callbacks.current_floor, self.callbacks.motor_direction)))
+            cur_floor, motor_dir = self.destinations.pop(self.destinations.index((self.callbacks.current_floor, self.callbacks.motor_direction)))
+            if motor_dir is not None:
+                self.current_requested_dir = motor_dir
             self.old_direction = self.callbacks.motor_direction
             if not self.is_on_way or (self.destinations and self.old_direction != self.destinations[0][0]) or not self.destinations:
                 logging.error("STOP MOTOR, destinations={}".format(self.destinations))
                 self.callbacks.motor_direction = None
         self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
-            self.destinations.pop(0)
+            cur_floor, motor_dir = self.destinations.pop(0)
+            if motor_dir is not None:
+                self.current_requested_dir = motor_dir
             self.old_direction = self.callbacks.motor_direction
             if not self.is_on_way or (self.destinations and self.old_direction != self.destinations[0][0]) or not self.destinations:
                 logging.error("STOP MOTOR, destinations={}".format(self.destinations))

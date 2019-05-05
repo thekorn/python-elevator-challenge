@@ -147,6 +147,30 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [3, 2])
 
+    def test_select_not_go_twice(self):
+        e = Elevator(ElevatorLogic())
+        e.call(5, DOWN)
+        e.select_floor(5)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+
+    def test_going_down_ingore_going_up(self):
+        e = Elevator(ElevatorLogic())
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(6)
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):
         logging.basicConfig(level=logging.DEBUG)
