@@ -67,7 +67,6 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 3, 2])
 
-    @unittest.skip("demonstrating skipping")
     def test_changing_both_directions(self):
         e = Elevator(ElevatorLogic())
         e.select_floor(5)
@@ -75,12 +74,14 @@ class TestElevator(unittest.TestCase):
         e.call(5, DOWN)
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
-        e.run_until_stopped()
         e.select_floor(4)
+        e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
         e.select_floor(6)
+        e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
         e.select_floor(6)
+        e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6])
 
     def test_en_passant(self):
@@ -194,6 +195,23 @@ class TestElevator(unittest.TestCase):
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
+
+    def test_wait_one_step_on_change_dir(self):
+        e = Elevator(ElevatorLogic())
+        e.select_floor(5)
+        e.call(5, UP)
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(6)
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
 
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):

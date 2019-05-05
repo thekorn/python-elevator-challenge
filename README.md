@@ -223,12 +223,12 @@ Here, the elevator considers itself to be going up, as it favors continuing in t
 Since nothing caused the elevator to move further up, it now waits for requests that cause it to move down.
 
     >>> e.select_floor(6)  # ignored
-    >>> e.run_until_stopped() # doctest: +SKIP
+    >>> e.run_until_stopped()
 
 Since nothing caused the elevator to move down, the elevator now considers itself idle. It can move in either direction.
 
     >>> e.select_floor(6)
-    >>> e.run_until_stopped() # doctest: +SKIP
+    >>> e.run_until_stopped()
     6...
 
 ### En passant

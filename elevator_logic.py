@@ -63,6 +63,7 @@ class ElevatorLogic(object):
         self.callbacks = None
 
         self.is_on_way = False
+        self.is_idle = []
         self.old_direction = None
         self.current_requested_dir = None
         self.priority = None
@@ -92,6 +93,10 @@ class ElevatorLogic(object):
                     # goto the new floor with prio as we are already moving in this direction
                     self.priority = (floor, direction)
                 return
+            else:
+                logging.debug("WWWEEE ARE IDDDLE")
+                self.is_idle = [True, True]
+                self.destinations.pop(self.destinations.index((floor, get_oposite_direction(direction))))
 
     def on_floor_selected(self, floor):
         """
@@ -102,7 +107,10 @@ class ElevatorLogic(object):
         floor: the floor that was requested
         """
         logging.debug("++++{} {}".format(self.callbacks.motor_direction, self.is_on_way))
-        logging.debug("try to select floor={}, dests={}, cur_motor_dir={}".format(floor, self.destinations, self.current_requested_dir))
+        logging.debug("++++++++++++++++++++++++++try to select floor={}, dests={}, cur_motor_dir={}, is_idle={}".format(floor, self.destinations, self.current_requested_dir, self.is_idle))
+        if self.is_idle:
+            self.is_idle.pop()
+            return
         relative_direction = get_relative_direction(self.callbacks.current_floor, floor)
         if self.callbacks.motor_direction is not None or self.is_on_way:
             if relative_direction != self.callbacks.motor_direction:
@@ -167,7 +175,10 @@ class ElevatorLogic(object):
         Maybe passengers have embarked and disembarked. The doors are closed,
         time to actually move, if necessary.
         """
-        logging.info("READY - DESTS: {}".format(self.destinations))
+        logging.info("--------------------------------------READY - DESTS: {} {}".format(self.destinations, self.is_idle))
+        #if self.is_idle:
+        #    self.is_idle = False
+        #    return
         if not self.destinations:
             return
         # if we did not decide whereto go yet, we always go to the nearest floor first
