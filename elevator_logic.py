@@ -31,7 +31,7 @@ class ElevatorLogic(object):
         direction: the direction the caller wants to go, up or down
         """
         if floor not in self.destinations:
-            self.destinations.append(floor)
+            self.destinations.append((floor, direction))
 
     def on_floor_selected(self, floor):
         """
@@ -41,15 +41,16 @@ class ElevatorLogic(object):
 
         floor: the floor that was requested
         """
+        direction = DOWN if (floor < self.callbacks.current_floor) else UP
         if floor not in self.destinations:
-            self.destinations.append(floor)
+            self.destinations.append((floor, direction))
 
     def on_floor_changed(self):
         """
         This lets you know that the elevator has moved one floor up or down.
         You should decide whether or not you want to stop the elevator.
         """
-        if self.destinations and self.destinations[0] == self.callbacks.current_floor:
+        if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.callbacks.motor_direction = None
             self.destinations.pop(0)
 
@@ -61,9 +62,10 @@ class ElevatorLogic(object):
         """
         if not self.destinations:
             return
-        # we always go to the nearest floor first
-        self.destinations = sorted(self.destinations, key=lambda floor: abs(floor-self.callbacks.current_floor))
-        destination_floor = self.destinations[0]
+        # if we did not decide whereto go yet, we always go to the nearest floor first
+        if self.callbacks.motor_direction is None:
+            self.destinations = sorted(self.destinations, key=lambda floor: abs(floor[0]-self.callbacks.current_floor))
+        destination_floor = self.destinations[0][0]
         if destination_floor > self.callbacks.current_floor:
             self.callbacks.motor_direction = UP
         elif destination_floor < self.callbacks.current_floor:
