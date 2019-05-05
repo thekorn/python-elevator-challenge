@@ -96,6 +96,22 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6])
 
+    def test_en_passant_wrong_direction(self):
+        e = Elevator(ElevatorLogic())
+        e.select_floor(5)
+        e.run_until_floor(2)
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2])
+        e.call(2, UP)
+        e.step()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3])
+        e.select_floor(3)  # missed the boat, ignored
+        e.step()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
+
 
 
 if __name__ == '__main__':

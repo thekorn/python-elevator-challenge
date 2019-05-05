@@ -108,9 +108,9 @@ class ElevatorLogic(object):
         self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.destinations.pop(0)
-            if not self.is_on_way or len(self.destinations) <= 1:
-                logging.debug("STOP MOTOR, destinations={}".format(self.destinations))
-                self.old_direction = self.callbacks.motor_direction
+            self.old_direction = self.callbacks.motor_direction
+            if not self.is_on_way or (self.destinations and self.old_direction != self.destinations[0][0]) or not self.destinations:
+                logging.error("STOP MOTOR, destinations={}".format(self.destinations))
                 self.callbacks.motor_direction = None
             
 
