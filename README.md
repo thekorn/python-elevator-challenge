@@ -99,7 +99,7 @@ As for the business logic, an example implementation is provided in the `elevato
 
 As provided, it doesn't pass the tests in this document. Your challenge is to fix it so that it does. To run the tests, run this in your shell:
 
-    python -m doctest -v README.md
+    python3.7 -m doctest -v README.md -f -o NORMALIZE_WHITESPACE
 
 With the correct business logic, here's how the elevator should behave:
 

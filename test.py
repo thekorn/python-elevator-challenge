@@ -1,6 +1,6 @@
 import unittest
-import contextlib
-from io import StringIO
+import logging
+import os
 
 from elevator import Elevator
 from elevator_logic import ElevatorLogic, UP, DOWN, FLOOR_COUNT
@@ -71,4 +71,6 @@ class TestElevator(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if os.environ.get("VERBOSE"):
+        logging.basicConfig(level=logging.DEBUG)
     unittest.main()

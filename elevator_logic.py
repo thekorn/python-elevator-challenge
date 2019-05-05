@@ -1,14 +1,16 @@
+import logging
+
 UP = 1
 DOWN = 2
 FLOOR_COUNT = 6
 
 def sort_destinations(current, destinations, priority=None):
     result = []
-    print("SORT, we arer at {}".format(current))
-    print("NOW: {}".format(destinations))
-    print("DISTINACE: {}".format(list(map(lambda floor: abs(current - floor[0]), destinations))))
+    logging.debug("SORT, we arer at {}".format(current))
+    logging.debug("NOW: {}".format(destinations))
+    logging.debug("DISTINACE: {}".format(list(map(lambda floor: abs(current - floor[0]), destinations))))
     destinations = sorted(destinations, key=lambda floor: -1* abs(current - floor[0]))
-    print("NEW: {}".format(destinations))
+    logging.debug("NEW: {}".format(destinations))
     future_direction = DOWN if current > destinations[0][0] else UP
     # first element in destinations is the farest away,
     # prioritice all requests which are on the way AND are in the same direction
@@ -18,7 +20,7 @@ def sort_destinations(current, destinations, priority=None):
         on_they_way = list(filter(lambda destination: destination[0] > current and destination[1] in (future_direction, None), destinations[1:]))    
     # TODO: do we need that??? order stop on its way, nearesrt first
     #on_the_way = sorted(on_the_way, key=lambda floor: abs(current - floor[0]))
-    print("GOTO {}, ON THE WAY {}".format(destinations[0], on_they_way))
+    logging.debug("GOTO {}, ON THE WAY {}".format(destinations[0], on_they_way))
     if priority and priority in destinations:
         priority = [destinations.pop(destinations.index(priority))]
     else:
@@ -35,7 +37,7 @@ class ElevatorLogic(object):
 
     Fix the methods below to implement the correct logic for elevators.
     The tests are integrated into `README.md`. To run the tests:
-    $ python -m doctest -v README.md
+    $ python3.7 -m doctest -v README.md -f -o NORMALIZE_WHITESPACE
 
     To learn when each method is called, read its docstring.
     To interact with the world, you can get the current floor from the
@@ -73,12 +75,12 @@ class ElevatorLogic(object):
 
         floor: the floor that was requested
         """
-        print(self.callbacks.motor_direction, self.is_on_way)
+        logging.debug("{} {}".format(self.callbacks.motor_direction, self.is_on_way))
         relative_direction = DOWN if floor < self.callbacks.current_floor else UP
         if self.callbacks.motor_direction is not None or self.is_on_way:
             if relative_direction != self.callbacks.motor_direction:
                 # ignore
-                print("IGNOREEEEEEEEE")
+                logging.debug("IGNOREEEEEEEEE")
                 return 
         if (floor, None) not in self.destinations:
             self.destinations.append((floor, None))
@@ -94,7 +96,7 @@ class ElevatorLogic(object):
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.destinations.pop(0)
             if not self.is_on_way or len(self.destinations) <= 1:
-                print("STOP MOTOR, destinations={}".format(self.destinations))
+                logging.debug("STOP MOTOR, destinations={}".format(self.destinations))
                 self.old_direction = self.callbacks.motor_direction
                 self.callbacks.motor_direction = None
             
@@ -109,10 +111,10 @@ class ElevatorLogic(object):
             return
         # if we did not decide whereto go yet, we always go to the nearest floor first
         if self.callbacks.motor_direction is None:
-            print("re-sort, current={}".format(self.callbacks.current_floor))
-            print(self.destinations)
+            logging.debug("re-sort, current={}".format(self.callbacks.current_floor))
+            logging.debug(self.destinations)
             self.destinations, self.is_on_way = sort_destinations(self.callbacks.current_floor, self.destinations, self.priority)
-            print(self.destinations)
+            logging.debug(self.destinations)
         destination_floor = self.destinations[0][0]
         if destination_floor > self.callbacks.current_floor:
             self.callbacks.motor_direction = UP
