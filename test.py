@@ -74,10 +74,10 @@ class TestElevator(unittest.TestCase):
         e.call(5, DOWN)
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
-        e.select_floor(4)
+        e.select_floor(4) # ignored
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
-        e.select_floor(6)
+        e.select_floor(6) # ignored
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
         e.select_floor(6)
@@ -212,6 +212,26 @@ class TestElevator(unittest.TestCase):
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
+
+    def test_other_dir_not_declared(self):
+        e = Elevator(ElevatorLogic())
+        e.select_floor(5)
+        e.call(5, UP)
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(6)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6])
+        e.run_until_stopped() # go back to 5
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6, 5])
+        print("IIIIIIIIM BACK {} {}".format(e._logic_delegate.is_idle, e._logic_delegate.is_idle_go_back))
+        e.select_floor(6)  # ignored
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6, 5, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6, 5, 4])
 
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):
