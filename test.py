@@ -44,6 +44,27 @@ class TestElevator(unittest.TestCase):
         e.select_floor(2)
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
+
+    def test_changing_directions(self):
+        e = Elevator(ElevatorLogic())
+        e.call(2, DOWN)
+        e.call(4, UP)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4])
+        e.select_floor(5)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
+
+    def test_changing_directions_no_furtherup(self):
+        e = Elevator(ElevatorLogic())
+        e.call(2, DOWN)
+        e.call(4, UP)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 3, 2])
             
 
 

@@ -2,7 +2,7 @@ UP = 1
 DOWN = 2
 FLOOR_COUNT = 6
 
-def sort_destinations(current, destinations):
+def sort_destinations(current, destinations, priority=None):
     result = []
     print("SORT, we arer at {}".format(current))
     print("NOW: {}".format(destinations))
@@ -19,7 +19,11 @@ def sort_destinations(current, destinations):
     # TODO: do we need that??? order stop on its way, nearesrt first
     #on_the_way = sorted(on_the_way, key=lambda floor: abs(current - floor[0]))
     print("GOTO {}, ON THE WAY {}".format(destinations[0], on_they_way))
-    next_destinations = on_they_way + [destinations[0]]
+    if priority and priority in destinations:
+        priority = [destinations.pop(destinations.index(priority))]
+    else:
+        priority = []
+    next_destinations = priority + on_they_way + [destinations[0]]
     for destination in destinations[1:]:
         if destination not in next_destinations:
             next_destinations.append(destination)
@@ -45,6 +49,8 @@ class ElevatorLogic(object):
         self.callbacks = None
 
         self.is_on_way = False
+        self.old_direction = None
+        self.priority = None
         self.debug_path = [1] # we always start at floor one
 
     def on_called(self, floor, direction):
@@ -68,14 +74,16 @@ class ElevatorLogic(object):
         floor: the floor that was requested
         """
         print(self.callbacks.motor_direction, self.is_on_way)
+        relative_direction = DOWN if floor < self.callbacks.current_floor else UP
         if self.callbacks.motor_direction is not None or self.is_on_way:
-            relative_direction = DOWN if floor < self.callbacks.current_floor else UP
             if relative_direction != self.callbacks.motor_direction:
                 # ignore
                 print("IGNOREEEEEEEEE")
                 return 
         if (floor, None) not in self.destinations:
             self.destinations.append((floor, None))
+        if self.callbacks.motor_direction is None and relative_direction == self.old_direction:
+            self.priority = (floor, None)
 
     def on_floor_changed(self):
         """
@@ -86,6 +94,8 @@ class ElevatorLogic(object):
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.destinations.pop(0)
             if not self.is_on_way or len(self.destinations) <= 1:
+                print("STOP MOTOR, destinations={}".format(self.destinations))
+                self.old_direction = self.callbacks.motor_direction
                 self.callbacks.motor_direction = None
             
 
@@ -101,7 +111,7 @@ class ElevatorLogic(object):
         if self.callbacks.motor_direction is None:
             print("re-sort, current={}".format(self.callbacks.current_floor))
             print(self.destinations)
-            self.destinations, self.is_on_way = sort_destinations(self.callbacks.current_floor, self.destinations)
+            self.destinations, self.is_on_way = sort_destinations(self.callbacks.current_floor, self.destinations, self.priority)
             print(self.destinations)
         destination_floor = self.destinations[0][0]
         if destination_floor > self.callbacks.current_floor:
