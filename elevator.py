@@ -1,62 +1,56 @@
-UP = 1
-DOWN = 2
-FLOOR_COUNT = 6
+from elevator_logic import UP, DOWN, FLOOR_COUNT
 
-class ElevatorLogic(object):
-    """
-    An incorrect implementation. Can you make it pass all the tests?
+class Elevator(object):
+    def __init__(self, logic_delegate, starting_floor=1):
+        self._current_floor = starting_floor
+        print("%s..." % starting_floor, end=" ")
+        self._motor_direction = None
+        self._logic_delegate = logic_delegate
+        self._logic_delegate.callbacks = self.Callbacks(self)
 
-    Fix the methods below to implement the correct logic for elevators.
-    The tests are integrated into `README.md`. To run the tests:
-    $ python -m doctest -v README.md
+    def call(self, floor, direction):
+        self._logic_delegate.on_called(floor, direction)
 
-    To learn when each method is called, read its docstring.
-    To interact with the world, you can get the current floor from the
-    `current_floor` property of the `callbacks` object, and you can move the
-    elevator by setting the `motor_direction` property. See below for how this is done.
-    """
+    def select_floor(self, floor):
+        self._logic_delegate.on_floor_selected(floor)
 
-    def __init__(self):
-        # Feel free to add any instance variables you want.
-        self.destination_floor = None
-        self.callbacks = None
+    def step(self):
+        delta = 0
+        if self._motor_direction == UP: delta = 1
+        elif self._motor_direction == DOWN: delta = -1
 
-    def on_called(self, floor, direction):
-        """
-        This is called when somebody presses the up or down button to call the elevator.
-        This could happen at any time, whether or not the elevator is moving.
-        The elevator could be requested at any floor at any time, going in either direction.
+        if delta:
+            self._current_floor = self._current_floor + delta
+            print("%s..." % self._current_floor, end=" ")
+            self._logic_delegate.on_floor_changed()
+        else:
+            self._logic_delegate.on_ready()
 
-        floor: the floor that the elevator is being called to
-        direction: the direction the caller wants to go, up or down
-        """
-        self.destination_floor = floor
+        assert self._current_floor >= 1
+        assert self._current_floor <= FLOOR_COUNT
+    
+    def run_until_stopped(self):
+        self.step()
+        while self._motor_direction is not None: self.step()
+    
+    def run_until_floor(self, floor):
+        for i in range(100):
+            self.step()
+            if self._current_floor == floor: break
+        else: assert False
 
-    def on_floor_selected(self, floor):
-        """
-        This is called when somebody on the elevator chooses a floor.
-        This could happen at any time, whether or not the elevator is moving.
-        Any floor could be requested at any time.
+    class Callbacks(object):
+        def __init__(self, outer):
+            self._outer = outer
 
-        floor: the floor that was requested
-        """
-        self.destination_floor = floor
+        @property
+        def current_floor(self):
+            return self._outer._current_floor
 
-    def on_floor_changed(self):
-        """
-        This lets you know that the elevator has moved one floor up or down.
-        You should decide whether or not you want to stop the elevator.
-        """
-        if self.destination_floor == self.callbacks.current_floor:
-            self.callbacks.motor_direction = None
+        @property
+        def motor_direction(self):
+            return self._outer._motor_direction
 
-    def on_ready(self):
-        """
-        This is called when the elevator is ready to go.
-        Maybe passengers have embarked and disembarked. The doors are closed,
-        time to actually move, if necessary.
-        """
-        if self.destination_floor > self.callbacks.current_floor:
-            self.callbacks.motor_direction = UP
-        elif self.destination_floor < self.callbacks.current_floor:
-            self.callbacks.motor_direction = DOWN
+        @motor_direction.setter
+        def motor_direction(self, direction):
+            self._outer._motor_direction = direction
