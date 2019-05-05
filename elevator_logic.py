@@ -2,13 +2,6 @@ UP = 1
 DOWN = 2
 FLOOR_COUNT = 6
 
-def debug_motor_direction(direction):
-    if direction == UP:
-        return "UP"
-    elif direction == DOWN:
-        return "DOWN"
-    return direction
-
 class ElevatorLogic(object):
     """
     An incorrect implementation. Can you make it pass all the tests?
@@ -25,10 +18,8 @@ class ElevatorLogic(object):
 
     def __init__(self):
         # Feel free to add any instance variables you want.
-        self.destination_floor = None
+        self.destinations = []
         self.callbacks = None
-
-        self.directions = []
 
     def on_called(self, floor, direction):
         """
@@ -39,10 +30,8 @@ class ElevatorLogic(object):
         floor: the floor that the elevator is being called to
         direction: the direction the caller wants to go, up or down
         """
-        if self.destination_floor is None:
-            self.destination_floor = floor
-        else:
-            assert False, "called: destination floor is already set to {}, current={}".format(self.destination_floor, self.callbacks.current_floor)
+        if floor not in self.destinations:
+            self.destinations.append(floor)
 
     def on_floor_selected(self, floor):
         """
@@ -52,19 +41,17 @@ class ElevatorLogic(object):
 
         floor: the floor that was requested
         """
-        if self.destination_floor is None:
-            self.destination_floor = floor
-        else:
-            assert False, "selected: destination floor is already set to {}, direction={}".format(self.destination_floor, debug_motor_direction(self.callbacks.motor_direction))
+        if floor not in self.destinations:
+            self.destinations.append(floor)
 
     def on_floor_changed(self):
         """
         This lets you know that the elevator has moved one floor up or down.
         You should decide whether or not you want to stop the elevator.
         """
-        if self.destination_floor == self.callbacks.current_floor:
+        if self.destinations and self.destinations[0] == self.callbacks.current_floor:
             self.callbacks.motor_direction = None
-            self.destination_floor = None
+            self.destinations.pop(0)
 
     def on_ready(self):
         """
@@ -72,7 +59,12 @@ class ElevatorLogic(object):
         Maybe passengers have embarked and disembarked. The doors are closed,
         time to actually move, if necessary.
         """
-        if self.destination_floor > self.callbacks.current_floor:
+        if not self.destinations:
+            return
+        # we always go to the nearest floor first
+        self.destinations = sorted(self.destinations, key=lambda floor: abs(floor-self.callbacks.current_floor))
+        destination_floor = self.destinations[0]
+        if destination_floor > self.callbacks.current_floor:
             self.callbacks.motor_direction = UP
-        elif self.destination_floor < self.callbacks.current_floor:
+        elif destination_floor < self.callbacks.current_floor:
             self.callbacks.motor_direction = DOWN
