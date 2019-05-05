@@ -136,6 +136,17 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
 
+    def test_one_below_one_up(self):
+        e = Elevator(ElevatorLogic(), 3)
+        e._logic_delegate.reset_debug_path(3)
+        self.assertEqual(e._logic_delegate.debug_path, [3])
+        e.select_floor(2)
+        e.select_floor(4)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [3, 2])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [3, 2])
+
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):
         logging.basicConfig(level=logging.DEBUG)

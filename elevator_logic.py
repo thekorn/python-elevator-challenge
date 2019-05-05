@@ -11,6 +11,9 @@ def get_oposite_direction(direction):
         return UP
     assert False, "Cannot change direction, unknow direction {}".format(direction)
 
+def get_relative_direction(current_floor, floor):
+    return DOWN if floor < current_floor else UP
+
 def sort_destinations(current, destinations, priority=None):
     result = []
     logging.debug("SORT, we arer at {}".format(current))
@@ -18,13 +21,13 @@ def sort_destinations(current, destinations, priority=None):
     logging.debug("DISTINACE: {}".format(list(map(lambda floor: abs(current - floor[0]), destinations))))
     destinations = sorted(destinations, key=lambda floor: -1* abs(current - floor[0]))
     logging.debug("NEW: {}".format(destinations))
-    future_direction = DOWN if current > destinations[0][0] else UP
+    relative_direction = get_relative_direction(current, destinations[0][0])
     # first element in destinations is the farest away,
     # prioritice all requests which are on the way AND are in the same direction
-    if future_direction == DOWN:
-        on_they_way = list(filter(lambda destination: destination[0] < current and destination[1] in (future_direction, None), destinations[1:]))
+    if relative_direction == DOWN:
+        on_they_way = list(filter(lambda destination: destination[0] < current and destination[1] in (relative_direction, None), destinations[1:]))
     else:
-        on_they_way = list(filter(lambda destination: destination[0] > current and destination[1] in (future_direction, None), destinations[1:]))    
+        on_they_way = list(filter(lambda destination: destination[0] > current and destination[1] in (relative_direction, None), destinations[1:]))    
     # TODO: do we need that??? order stop on its way, nearesrt first
     #on_the_way = sorted(on_the_way, key=lambda floor: abs(current - floor[0]))
     logging.debug("GOTO {}, ON THE WAY {}".format(destinations[0], on_they_way))
@@ -62,7 +65,10 @@ class ElevatorLogic(object):
         self.is_on_way = False
         self.old_direction = None
         self.priority = None
-        self.debug_path = [1] # we always start at floor one
+        self.reset_debug_path(1) # per default we start at floor one, re-call this method in other test-scenarios
+
+    def reset_debug_path(self, floor):
+        self.debug_path = [floor]
 
     def on_called(self, floor, direction):
         """
@@ -86,13 +92,19 @@ class ElevatorLogic(object):
         floor: the floor that was requested
         """
         logging.debug("++++{} {}".format(self.callbacks.motor_direction, self.is_on_way))
-        relative_direction = DOWN if floor < self.callbacks.current_floor else UP
+        relative_direction = get_relative_direction(self.callbacks.current_floor, floor)
         if self.callbacks.motor_direction is not None or self.is_on_way:
             if relative_direction != self.callbacks.motor_direction:
                 # ignore
                 logging.debug(">>>>>>> IGNOREEEEEEEEE")
                 return
         if (floor, None) not in self.destinations:
+            is_all_selected_dests = not any(filter(None, [dest[1] for dest in self.destinations]))
+            same_relative_dirs = any(map(lambda dest: get_relative_direction(self.callbacks.current_floor, dest[0]) == relative_direction, self.destinations))
+            if is_all_selected_dests and not same_relative_dirs and self.destinations:
+                logging.debug(">>>>>>> IGNOREEEEEEEEEEEE - nonesense")
+                return
+            logging.debug("############### ALARM {} {} - {} {}".format(is_all_selected_dests, self.destinations, is_all_selected_dests, same_relative_dirs))
             self.destinations.append((floor, None))
             if relative_direction == self.callbacks.motor_direction:
                 logging.debug("+++++ before: {}".format(self.destinations))
