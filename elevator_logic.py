@@ -21,6 +21,8 @@ class ElevatorLogic(object):
         self.destinations = []
         self.callbacks = None
 
+        self.debug_path = [1] # we always start at floor one
+
     def on_called(self, floor, direction):
         """
         This is called when somebody presses the up or down button to call the elevator.
@@ -50,6 +52,7 @@ class ElevatorLogic(object):
         This lets you know that the elevator has moved one floor up or down.
         You should decide whether or not you want to stop the elevator.
         """
+        self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.callbacks.motor_direction = None
             self.destinations.pop(0)

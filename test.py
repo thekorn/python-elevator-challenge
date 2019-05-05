@@ -8,17 +8,25 @@ from elevator_logic import ElevatorLogic, UP, DOWN, FLOOR_COUNT
 
 class TestElevator(unittest.TestCase):
 
-    def test_init(self):
+    def test_basic(self):
         """should start on floor 1"""
-        temp_stdout = StringIO()
-        with contextlib.redirect_stdout(temp_stdout):
-            e = Elevator(ElevatorLogic())
-            e.call(5, DOWN)
-            e.run_until_stopped()
-        output = temp_stdout.getvalue().strip()
-        self.assertEqual(output, '1...')
+        e = Elevator(ElevatorLogic())
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.select_floor(1)
+        e.call(3, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2, 1])
 
-        #with contextlib.redirect_stderr(temp_stdout):
+    def test_directionality(self):
+        e = Elevator(ElevatorLogic())
+        e.call(2, DOWN)
+        e.select_floor(5)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
             
 
 
