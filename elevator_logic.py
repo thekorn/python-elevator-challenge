@@ -2,6 +2,29 @@ UP = 1
 DOWN = 2
 FLOOR_COUNT = 6
 
+def sort_destinations(current, destinations):
+    result = []
+    print("SORT, we arer at {}".format(current))
+    print("NOW: {}".format(destinations))
+    print("DISTINACE: {}".format(list(map(lambda floor: abs(current - floor[0]), destinations))))
+    destinations = sorted(destinations, key=lambda floor: -1* abs(current - floor[0]))
+    print("NEW: {}".format(destinations))
+    future_direction = DOWN if current > destinations[0][0] else UP
+    # first element in destinations is the farest away,
+    # prioritice all requests which are on the way AND are in the same direction
+    if future_direction == DOWN:
+        on_they_way = list(filter(lambda destination: destination[0] < current and destination[1] in (future_direction, None), destinations[1:]))
+    else:
+        on_they_way = list(filter(lambda destination: destination[0] > current and destination[1] in (future_direction, None), destinations[1:]))    
+    # TODO: do we need that??? order stop on its way, nearesrt first
+    #on_the_way = sorted(on_the_way, key=lambda floor: abs(current - floor[0]))
+    print("GOTO {}, ON THE WAY {}".format(destinations[0], on_they_way))
+    next_destinations = on_they_way + [destinations[0]]
+    for destination in destinations[1:]:
+        if destination not in next_destinations:
+            next_destinations.append(destination)
+    return (next_destinations, bool(on_they_way))
+
 class ElevatorLogic(object):
     """
     An incorrect implementation. Can you make it pass all the tests?
@@ -21,6 +44,7 @@ class ElevatorLogic(object):
         self.destinations = []
         self.callbacks = None
 
+        self.is_on_way = False
         self.debug_path = [1] # we always start at floor one
 
     def on_called(self, floor, direction):
@@ -32,7 +56,7 @@ class ElevatorLogic(object):
         floor: the floor that the elevator is being called to
         direction: the direction the caller wants to go, up or down
         """
-        if floor not in self.destinations:
+        if (floor, direction) not in self.destinations:
             self.destinations.append((floor, direction))
 
     def on_floor_selected(self, floor):
@@ -43,9 +67,15 @@ class ElevatorLogic(object):
 
         floor: the floor that was requested
         """
-        direction = DOWN if (floor < self.callbacks.current_floor) else UP
-        if floor not in self.destinations:
-            self.destinations.append((floor, direction))
+        print(self.callbacks.motor_direction, self.is_on_way)
+        if self.callbacks.motor_direction is not None or self.is_on_way:
+            relative_direction = DOWN if floor < self.callbacks.current_floor else UP
+            if relative_direction != self.callbacks.motor_direction:
+                # ignore
+                print("IGNOREEEEEEEEE")
+                return 
+        if (floor, None) not in self.destinations:
+            self.destinations.append((floor, None))
 
     def on_floor_changed(self):
         """
@@ -54,8 +84,10 @@ class ElevatorLogic(object):
         """
         self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
-            self.callbacks.motor_direction = None
             self.destinations.pop(0)
+            if not self.is_on_way or len(self.destinations) <= 1:
+                self.callbacks.motor_direction = None
+            
 
     def on_ready(self):
         """
@@ -67,7 +99,10 @@ class ElevatorLogic(object):
             return
         # if we did not decide whereto go yet, we always go to the nearest floor first
         if self.callbacks.motor_direction is None:
-            self.destinations = sorted(self.destinations, key=lambda floor: abs(floor[0]-self.callbacks.current_floor))
+            print("re-sort, current={}".format(self.callbacks.current_floor))
+            print(self.destinations)
+            self.destinations, self.is_on_way = sort_destinations(self.callbacks.current_floor, self.destinations)
+            print(self.destinations)
         destination_floor = self.destinations[0][0]
         if destination_floor > self.callbacks.current_floor:
             self.callbacks.motor_direction = UP
