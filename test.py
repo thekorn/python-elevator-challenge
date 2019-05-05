@@ -8,9 +8,14 @@ from elevator_logic import ElevatorLogic, UP, DOWN, FLOOR_COUNT
 
 
 class TestElevator(unittest.TestCase):
+    """ unittest versions of the doc tests
+     
+        having the as unittests is helpful for debugging
+        for documentation on the logic behind each tests
+        look at `README.md`
+    """
 
     def test_basic(self):
-        """should start on floor 1"""
         e = Elevator(ElevatorLogic())
         e.call(5, DOWN)
         e.run_until_stopped()
@@ -114,11 +119,11 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
 
-    @unittest.skip("demonstrating skipping")
+    #@unittest.skip("demonstrating skipping")
     def test_random_requests(self):
         # just make sure that a random sequence newer crashes
         e = Elevator(ElevatorLogic())
-        for i in range(100):  
+        for i in range(1000):  
             r = random.randrange(6)
             if r == 0: e.call(
                 random.randrange(FLOOR_COUNT) + 1,
@@ -142,7 +147,7 @@ class TestElevator(unittest.TestCase):
         e._logic_delegate.reset_debug_path(3)
         self.assertEqual(e._logic_delegate.debug_path, [3])
         e.select_floor(2)
-        e.select_floor(4)
+        e.select_floor(4) # ignored
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [3, 2])
         e.run_until_stopped()
@@ -225,7 +230,6 @@ class TestElevator(unittest.TestCase):
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6])
         e.run_until_stopped() # go back to 5
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6, 5])
-        print("IIIIIIIIM BACK {} {}".format(e._logic_delegate.is_idle, e._logic_delegate.is_idle_go_back))
         e.select_floor(6)  # ignored
         e.select_floor(4)
         e.run_until_stopped()
