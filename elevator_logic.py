@@ -4,6 +4,13 @@ UP = 1
 DOWN = 2
 FLOOR_COUNT = 6
 
+def get_oposite_direction(direction):
+    if direction == UP:
+        return DOWN
+    if direction == DOWN:
+        return UP
+    assert False, "Cannot change direction, unknow direction {}".format(direction)
+
 def sort_destinations(current, destinations, priority=None):
     result = []
     logging.debug("SORT, we arer at {}".format(current))
@@ -65,7 +72,8 @@ class ElevatorLogic(object):
         direction: the direction the caller wants to go, up or down
         """
         if (floor, direction) not in self.destinations:
-            self.destinations.append((floor, direction))
+            if (floor, get_oposite_direction(direction)) not in self.destinations:
+                self.destinations.append((floor, direction))
 
     def on_floor_selected(self, floor):
         """
@@ -75,15 +83,19 @@ class ElevatorLogic(object):
 
         floor: the floor that was requested
         """
-        logging.debug("{} {}".format(self.callbacks.motor_direction, self.is_on_way))
+        logging.debug("++++{} {}".format(self.callbacks.motor_direction, self.is_on_way))
         relative_direction = DOWN if floor < self.callbacks.current_floor else UP
         if self.callbacks.motor_direction is not None or self.is_on_way:
             if relative_direction != self.callbacks.motor_direction:
                 # ignore
-                logging.debug("IGNOREEEEEEEEE")
-                return 
+                logging.debug(">>>>>>> IGNOREEEEEEEEE")
+                return
         if (floor, None) not in self.destinations:
             self.destinations.append((floor, None))
+            if relative_direction == self.callbacks.motor_direction:
+                logging.debug("+++++ before: {}".format(self.destinations))
+                self.destinations, self.is_on_way = sort_destinations(self.callbacks.current_floor, self.destinations)
+                logging.debug("+++++ after: {}".format(self.destinations))
         if self.callbacks.motor_direction is None and relative_direction == self.old_direction:
             self.priority = (floor, None)
 
@@ -92,6 +104,7 @@ class ElevatorLogic(object):
         This lets you know that the elevator has moved one floor up or down.
         You should decide whether or not you want to stop the elevator.
         """
+        logging.info("CHANGED - DESTS: {}, current={}".format(self.destinations, self.callbacks.current_floor))
         self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.destinations.pop(0)
@@ -107,6 +120,7 @@ class ElevatorLogic(object):
         Maybe passengers have embarked and disembarked. The doors are closed,
         time to actually move, if necessary.
         """
+        logging.info("READY - DESTS: {}".format(self.destinations))
         if not self.destinations:
             return
         # if we did not decide whereto go yet, we always go to the nearest floor first
