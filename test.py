@@ -171,6 +171,30 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4])
 
+    def test_ignore_call_on_current_floor(self):
+        e = Elevator(ElevatorLogic())
+        e.call(3, UP)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3])
+        e.call(3, UP)
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+
+    def test_change_direction_right_in_time(self):
+        e = Elevator(ElevatorLogic())
+        e.call(2, DOWN)
+        e.call(4, UP)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4])
+        e.call(5, DOWN)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
+
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):
         logging.basicConfig(level=logging.DEBUG)

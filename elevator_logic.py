@@ -80,9 +80,18 @@ class ElevatorLogic(object):
         floor: the floor that the elevator is being called to
         direction: the direction the caller wants to go, up or down
         """
+        logging.info("CALLLLLLLLLLLLL {} {}".format(floor, direction))
+        if floor == self.callbacks.current_floor and self.callbacks.motor_direction is None:
+            # dont move if the requested floor is the current one
+            return
         if (floor, direction) not in self.destinations:
             if (floor, get_oposite_direction(direction)) not in self.destinations:
+                rel_dir = get_relative_direction(self.callbacks.current_floor, floor)
                 self.destinations.append((floor, direction))
+                if rel_dir == self.old_direction:
+                    # goto the new floor with prio as we are already moving in this direction
+                    self.priority = (floor, direction)
+                return
 
     def on_floor_selected(self, floor):
         """
