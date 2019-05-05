@@ -247,9 +247,9 @@ Keep in mind that a user could call the elevator or select a floor at any time. 
     4...
     >>> e.call(5, UP)
     >>> e.run_until_stopped()  # stops for above # doctest:+ELLIPSIS
-    ...                        # TODO: was `5...` but I think `5... 6...` is correct,
-    ...                        # otherwice the request to go to floor 6 is ignored
-    5... 6...
+    ...                        # TODO: why is `5... 6...` incorrect?
+    ...                        # as we selected floor 6 in the first place...
+    5... 
 
 On the other hand, if the elevator is already at, or has passed the floor in question, then the request should be treated like a request in the wrong direction. That is to say, a call is serviced later, and a floor selection is ignored.
 
@@ -276,7 +276,7 @@ No amount of legal moves should compel the elevator to enter an illegal state. H
     >>> import random
     >>> e = Elevator(ElevatorLogic())
     1...
-    >>> try: print('-', end=' ')  # doctest:+ELLIPSIS
+    >>> try: print('-', end=' ')  # doctest:+ELLIPSIS,+SKIP
     ... finally:
     ...     for i in range(100000):  
     ...         r = random.randrange(6)
