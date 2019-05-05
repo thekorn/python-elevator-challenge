@@ -1,6 +1,7 @@
 import unittest
 import logging
 import os
+import random
 
 from elevator import Elevator
 from elevator_logic import ElevatorLogic, UP, DOWN, FLOOR_COUNT
@@ -94,7 +95,7 @@ class TestElevator(unittest.TestCase):
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4])
         e.call(5, UP)
         e.run_until_stopped()
-        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 6])
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
 
     def test_en_passant_wrong_direction(self):
         e = Elevator(ElevatorLogic())
@@ -112,7 +113,28 @@ class TestElevator(unittest.TestCase):
         e.run_until_stopped()
         self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5, 4, 3, 2])
 
+    @unittest.skip("demonstrating skipping")
+    def test_random_requests(self):
+        # just make sure that a random sequence newer crashes
+        e = Elevator(ElevatorLogic())
+        for i in range(100):  
+            r = random.randrange(6)
+            if r == 0: e.call(
+                random.randrange(FLOOR_COUNT) + 1,
+                random.choice((UP, DOWN)))
+            elif r == 1: e.select_floor(random.randrange(FLOOR_COUNT) + 1)
+            else: e.step()
 
+    def test_called_while_moving(self):
+        e = Elevator(ElevatorLogic())
+        e.call(5, UP)
+        e.run_until_floor(2)
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2])
+        e.call(3, UP)
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3])
+        e.run_until_stopped()
+        self.assertEqual(e._logic_delegate.debug_path, [1, 2, 3, 4, 5])
 
 if __name__ == '__main__':
     if os.environ.get("VERBOSE"):

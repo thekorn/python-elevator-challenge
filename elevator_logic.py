@@ -32,7 +32,9 @@ def sort_destinations(current, destinations, priority=None):
         priority = [destinations.pop(destinations.index(priority))]
     else:
         priority = []
-    next_destinations = priority + on_they_way + [destinations[0]]
+    next_destinations = priority + on_they_way
+    if destinations:
+        next_destinations += [destinations[0]]
     for destination in destinations[1:]:
         if destination not in next_destinations:
             next_destinations.append(destination)
@@ -104,7 +106,15 @@ class ElevatorLogic(object):
         This lets you know that the elevator has moved one floor up or down.
         You should decide whether or not you want to stop the elevator.
         """
-        logging.info("CHANGED - DESTS: {}, current={}".format(self.destinations, self.callbacks.current_floor))
+        logging.info("CHANGED - DESTS: {}, current={}, dir={}".format(self.destinations, self.callbacks.current_floor, self.callbacks.motor_direction))
+        if (self.callbacks.current_floor, self.callbacks.motor_direction) in self.destinations:
+            logging.error(">>>>>>>>>>>>>>>>>> ALARM")
+            # TODO: de-duplicate
+            self.destinations.pop(self.destinations.index((self.callbacks.current_floor, self.callbacks.motor_direction)))
+            self.old_direction = self.callbacks.motor_direction
+            if not self.is_on_way or (self.destinations and self.old_direction != self.destinations[0][0]) or not self.destinations:
+                logging.error("STOP MOTOR, destinations={}".format(self.destinations))
+                self.callbacks.motor_direction = None
         self.debug_path.append(self.callbacks.current_floor)
         if self.destinations and self.destinations[0][0] == self.callbacks.current_floor:
             self.destinations.pop(0)
